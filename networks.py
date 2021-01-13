@@ -1,47 +1,102 @@
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torch.nn import init
+import functools
+from torch.optim import lr_scheduler
 
-def deconv(c_in, c_out, k_size, stride=2, pad=1, bn=True):
-    layers = []
-    layers.append(nn.ConvTranspose2d(c_in, c_out, k_size, stride, pad, bias=False))
-    if bn:
-        layers.append(nn.BatchNorm2d(c_out))
-    return nn.Sequential(*layers)
-
-def conv(c_in, c_out, k_size, stride=2, pad=1, bn=True):
-    layers = []
-    layers.append(nn.Conv2d(c_in, c_out, k_size, stride, pad, bias=False))
-    if bn:
-        layers.append(nn.BatchNorm2d(c_out))
-    return nn.Sequential(*layers)
+class ResidualBlock(nn.Module):
+    def __init__(self, dim, bias):
+        super(ResidualBlock, self).__init__()
+        resblock = [
+            nn.ReflectionPad2d(1), 
+            nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=bias), 
+            nn.BatchNorm2d(dim), 
+            nn.ReLU(True),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=bias),
+            nn.BatchNorm2d(dim)
+            ]
+        resblock = nn.Sequential(*resblock)
     
-class Basic_Generator(nn.Module):
-    def __init__(self, conv_dim=64):
-        super(Basic_Generator, self).__init__()
-        # encoding blocks
-
-        model = nn.ConvTranspose2d(1, conv_dim)
-        self.conv1 = conv(1, conv_dim, 4)
-        self.conv2 = conv(conv_dim, conv_dim*2, 4)
-        
-        # residual blocks
-        self.conv3 = conv(conv_dim*2, conv_dim*2, 3, 1, 1)
-        self.conv4 = conv(conv_dim*2, conv_dim*2, 3, 1, 1)
-        
-        # decoding blocks
-        self.deconv1 = deconv(conv_dim*2, conv_dim, 4)
-        self.deconv2 = deconv(conv_dim, 3, 4, bn=False)
-        
     def forward(self, x):
-        out = F.leaky_relu(self.conv1(x), 0.05)      # (?, 64, 16, 16)
-        out = F.leaky_relu(self.conv2(out), 0.05)    # (?, 128, 8, 8)
-        
-        out = F.leaky_relu(self.conv3(out), 0.05)    # ( " )
-        out = F.leaky_relu(self.conv4(out), 0.05)    # ( " )
-        
-        out = F.leaky_relu(self.deconv1(out), 0.05)  # (?, 64, 16, 16)
-        out = F.tanh(self.deconv2(out))              # (?, 3, 32, 32)
+        out = x + self.conv_block(x)
         return out
 
-class Generator_Backward(nn.Module):
-    
+class Generator(nn.Module):
+    def __init__(self, input_channel, output_channel, conv_features=64, bias=False, n_blocks=9):
+        super(Generator, self).__init__()
+        model = [
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(input_channel, conv_features, kernel_size=7, padding=0, bias=bias),
+            nn.BatchNorm2d(conv_features),
+            nn.ReLU(True)
+            ]
+
+        model += [
+            nn.Conv2d(conv_features, conv_features * 2, kernel_size=3, stride=2, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 2),
+            nn.ReLU(True),
+            nn.Conv2d(conv_features * 2, conv_features * 4, kernel_size=3, stride=2, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 4),
+            nn.ReLU(True)
+                    ]
+
+        for i in range(n_blocks):
+            model += [ResidualBlock(conv_features * 4, use_bias=bias)]
+
+        model += [
+            nn.ConvTranspose2d(conv_features * 4, conv_features * 2,
+                                        kernel_size=3, stride=2,
+                                        padding=1, output_padding=1,
+                                        bias=bias),
+            nn.BatchNorm2d(int(conv_features * 2)),
+            nn.ReLU(True),
+            nn.ConvTranspose2d(conv_features * 2, conv_features,
+                                kernel_size=3, stride=2,
+                                padding=1, output_padding=1,
+                                bias=bias),
+            nn.BatchNorm2d(conv_features),
+            nn.ReLU(True)
+                    ]
+
+        model += [
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(conv_features, output_channel, kernel_size=7, padding=0),
+            nn.Tanh()
+            ]
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x):
+        return self.model(x)
+
+class Discriminator(nn.Module):
+    def __init__(self, input_channel, conv_features=64, n_layers=3, bias=False):
+        super().__init__()
+
+        model = [nn.Conv2d(input_channel, conv_features, kernel_size=4, stride=2, padding=1), 
+                nn.LeakyReLU(0.2, True)]
+
+        model += [
+            nn.Conv2d(conv_features, conv_features * 2, kernel_size=4, stride=2, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 2),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv2d(conv_features * 2, conv_features * 4, kernel_size=4, stride=2, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 4),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv2d(conv_features * 4, conv_features * 8, kernel_size=4, stride=2, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 8),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv2d(conv_features * 8, conv_features * 8, kernel_size=4, stride=1, padding=1, bias=bias),
+            nn.BatchNorm2d(conv_features * 8),
+            nn.LeakyReLU(0.2, True),
+            nn.Conv2d(conv_features * 8, 1, kernel_size=4, stride=1, padding=1)
+            ]
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+
