@@ -16,10 +16,10 @@ class ResidualBlock(nn.Module):
             nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=bias),
             nn.BatchNorm2d(dim)
             ]
-        resblock = nn.Sequential(*resblock)
+        self.resblock = nn.Sequential(*resblock)
     
     def forward(self, x):
-        out = x + self.conv_block(x)
+        out = x + self.resblock(x)
         return out
 
 class Generator(nn.Module):
