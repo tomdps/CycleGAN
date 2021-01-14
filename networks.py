@@ -11,6 +11,8 @@ class CycleGAN(nn.Module):
         self.G2 = Generator(input_channel, output_channel, conv_features, bias, n_blocks)
         self.D1 = Discriminator(output_channel, conv_features, bias)
         self.D2 = Discriminator(output_channel, conv_features, bias)
+        self.g_opt = None
+        self.d_opt = None
 
 class ResidualBlock(nn.Module):
     def __init__(self, dim, bias):
