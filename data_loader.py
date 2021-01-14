@@ -70,21 +70,21 @@ class CycleGanDataloader(DataLoader):
 
 ## Test
 
-
-monet_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/monet_jpg'
-photo_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/photo_jpg'
-data1 = CycleGanDataset(monet_path, normalize=(True))
-data2 = CycleGanDataset(photo_path, normalize=(True))
-
-print(data1.__len__())
-print(data2.__len__())
-
-data1.plot_image(4)
-data2.plot_image(4)
-
-dataloader1 = CycleGanDataloader(data1)
-dataloader1.plot_image(4)
-
-dataloader2 = CycleGanDataloader(data2)
-dataloader2.plot_image(4)
+if __name__=='main':
+    monet_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/monet_jpg'
+    photo_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/photo_jpg'
+    data1 = CycleGanDataset(monet_path, normalize=(True))
+    data2 = CycleGanDataset(photo_path, normalize=(True))
+    
+    print(data1.__len__())
+    print(data2.__len__())
+    
+    data1.plot_image(4)
+    data2.plot_image(4)
+    
+    dataloader1 = CycleGanDataloader(data1)
+    dataloader1.plot_image(4)
+    
+    dataloader2 = CycleGanDataloader(data2)
+    dataloader2.plot_image(4)
 
