@@ -5,7 +5,7 @@ from data_loader import *
 from utils import *
 
 
-def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error(2), loss_cycle = error(1)):
+def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error(2), loss_cycle = error(1), print_every = 100):
     G1 = cycle_gan.G1
     G2 = cycle_gan.G2
     D1 = cycle_gan.D1
@@ -64,7 +64,7 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
         G2_loss.backward()
         cycle_gan.g_opt.step()
         
-        if (iteration+1) % 100 == 0:
+        if (iteration+1) % print_every == 0:
             print('Iter [%d/%d], d_loss_real: %.4f, d_loss_fake: %.4f, G1_loss: %.4f, '
                     'G2_loss: %.4f'
                     %(iteration+1, max_iter, d_loss_real.data[0], d_loss_fake.data[0], 
