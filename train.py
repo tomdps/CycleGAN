@@ -67,5 +67,5 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
         if (iteration+1) % print_every == 0:
             print('Iter [%d/%d], d_loss_real: %.4f, d_loss_fake: %.4f, G1_loss: %.4f, '
                     'G2_loss: %.4f'
-                    %(iteration+1, max_iter, d_loss_real.data[0], d_loss_fake.data[0], 
-                    G1_loss.data[0], G2_loss.data[0]))
+                    %(iteration+1, max_iter, d_loss_real.item(), d_loss_fake.item(), 
+                    G1_loss.item(), G2_loss.item()))
