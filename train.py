@@ -50,7 +50,7 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
         G2oG1_gen = G2(G1_gen)
         G1_loss = loss_gan(D1_gen-1) + loss_cycle(G2oG1_gen - data_1)
         
-        d_loss_fake.backward()
+        G1_loss.backward()
         cycle_gan.g_opt.step()
         
         cycle_gan.g_opt.zero_grad()
@@ -61,7 +61,7 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
         G1oG2_gen = G1(G2_gen)
         G2_loss = loss_gan(D2_gen-1) + loss_cycle(G1oG2_gen - data_2)
 
-        d_loss_fake.backward()
+        G2_loss.backward()
         cycle_gan.g_opt.step()
         
         if (iteration+1) % 100 == 0:
