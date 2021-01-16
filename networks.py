@@ -16,7 +16,7 @@ class CycleGAN(nn.Module):
 
 class ResidualBlock(nn.Module):
     def __init__(self, dim, bias):
-        super(ResidualBlock, self).__init__()
+        super(ResidualBlock, self).__init__(bias = bias)
         resblock = [
             nn.ReflectionPad2d(1), 
             nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=bias), 
@@ -52,7 +52,7 @@ class Generator(nn.Module):
                     ]
 
         for i in range(n_blocks):
-            model += [ResidualBlock(conv_features * 4, use_bias=bias)]
+            model += [ResidualBlock(conv_features * 4, bias=bias)]
 
         model += [
             nn.ConvTranspose2d(conv_features * 4, conv_features * 2,
