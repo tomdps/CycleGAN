@@ -14,7 +14,7 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
     dl2_iter = iter(dataloader2)
     iter_per_epoch = min(len(dl1_iter), len(dl2_iter))
         
-    for iteration in max_iter:
+    for iteration in range(max_iter):
         
         if (iteration +1) % iter_per_epoch == 0:
             dl1_iter = iter(dataloader1)
