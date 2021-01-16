@@ -16,7 +16,7 @@ class CycleGAN(nn.Module):
 
 class ResidualBlock(nn.Module):
     def __init__(self, dim, bias):
-        super(ResidualBlock, self).__init__(bias = bias)
+        super(ResidualBlock, self).__init__()
         resblock = [
             nn.ReflectionPad2d(1), 
             nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=bias), 
