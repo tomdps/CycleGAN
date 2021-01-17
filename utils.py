@@ -11,7 +11,7 @@ def error(n):
         return torch.mean(torch.abs(tensor**n))
     return loss_n
 
-def init_model(cycle_gan, optimizer = None, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False, init_std=0.01):
+def init_model(cycle_gan, optimizer = None, lr=0.0002, betas=(0.5, 0.999), eps=1e-08, weight_decay=0, amsgrad=False, init_std=0.02):
     # weights initialization
     #N(0,0.01)
     def init_weights(m):

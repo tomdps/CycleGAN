@@ -3,9 +3,10 @@ import torch.nn as nn
 from networks import *
 from data_loader import *
 from utils import *
+import wandb
 
 
-def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error(2), loss_cycle = error(1), print_every = 100):
+def train(cycle_gan, dataloader1, dataloader2, model_path, max_iter = 7000, lambd=10, loss_gan = error(2), loss_cycle = error(1), print_every = 100, save_every=2000, sample_every=500, wandb=False):
     G1 = cycle_gan.G1
     G2 = cycle_gan.G2
     D1 = cycle_gan.D1
@@ -23,49 +24,77 @@ def train(cycle_gan, dataloader1, dataloader2, max_iter = 7000, loss_gan = error
         data_1 = dl1_iter.next().cuda()
         data_2 = dl1_iter.next().cuda()
 
-        cycle_gan.g_opt.zero_grad()
-        cycle_gan.d_opt.zero_grad()
-
+        #inference
         D1_real = D1(data_2)
-        d1_loss_real = loss_gan(D1_real-1)
-        D2_real = D2(data_1)
-        d2_loss_real = loss_gan(D2_real-1)
-        d_loss_real = d1_loss_real + d2_loss_real
-        d_loss_real.backward()
-        cycle_gan.d_opt.step()
-
         D1_fake = D1(G1(data_1))
-        d1_loss_fake = loss_gan(D1_fake)
+        D2_real = D2(data_1)
         D2_fake = D2(G2(data_2))
-        d2_loss_fake = loss_gan(D2_fake)
-        d_loss_fake = d1_loss_fake + d2_loss_fake
-        d_loss_fake.backward()
-        cycle_gan.d_opt.step()
-        
-        cycle_gan.g_opt.zero_grad()
-        cycle_gan.d_opt.zero_grad()
-
         G1_gen = G1(data_1)
         D1_gen = D1(G1_gen)
         G2oG1_gen = G2(G1_gen)
-        G1_loss = loss_gan(D1_gen-1) + loss_cycle(G2oG1_gen - data_1)
-        
-        G1_loss.backward()
-        cycle_gan.g_opt.step()
-        
-        cycle_gan.g_opt.zero_grad()
-        cycle_gan.d_opt.zero_grad()
-
         G2_gen = G2(data_2)
         D2_gen = D2(G2_gen)
         G1oG2_gen = G1(G2_gen)
-        G2_loss = loss_gan(D2_gen-1) + loss_cycle(G1oG2_gen - data_2)
 
-        G2_loss.backward()
+        #Generators training
+        for param in D1.parameters():
+            param.requires_grad = False
+        for param in D2.parameters():
+            param.requires_grad = False
+        
+        cycle_gan.g_opt.zero_grad()
+
+        G_loss = loss_gan(D1_gen-1) + lambd*loss_cycle(G2oG1_gen - data_1) + loss_gan(D1_gen-1) + lambd*loss_cycle(G2oG1_gen - data_1)
+        G_loss.backward()
+
         cycle_gan.g_opt.step()
+
+        for param in D1.parameters():
+            param.requires_grad = True
+        for param in D2.parameters():
+            param.requires_grad = True
+
+        cycle_gan.d_opt.zero_grad()
+
+        d1_loss_real = loss_gan(D1_real-1)
+        d1_loss_fake = loss_gan(D1_fake)
+        d1_loss = (d1_loss_real + d1_loss_fake)*0.5
+        d1_loss.backward()
+        
+        d2_loss_real = loss_gan(D2_real-1)
+        d2_loss_fake = loss_gan(D2_fake)
+        d2_loss = (d2_loss_real + d2_loss_fake)*0.5
+        d2_loss.backward()
+        
+        cycle_gan.d_opt.step()
         
         if (iteration+1) % print_every == 0:
-            print('Iter [%d/%d], d_loss_real: %.4f, d_loss_fake: %.4f, G1_loss: %.4f, '
-                    'G2_loss: %.4f'
-                    %(iteration+1, max_iter, d_loss_real.item(), d_loss_fake.item(), 
-                    G1_loss.item(), G2_loss.item()))
+            print('Iter [%d/%d], G_loss: %.4f, d1_loss: %.4f, d2_loss: %.4f '
+                    %(iteration+1, max_iter, G_loss.item(), d1_loss.item(), 
+                    d2_loss.item()))
+        
+        if (iteration+1) % 5000 == 0:
+            g1_path = os.path.join(model_path, 'g1-%d.pkl' %(iteration+1))
+            g2_path = os.path.join(model_path, 'g2-%d.pkl' %(iteration+1))
+            d1_path = os.path.join(model_path, 'd1-%d.pkl' %(iteration+1))
+            d2_path = os.path.join(model_path, 'd2-%d.pkl' %(iteration+1))
+            torch.save(G1.state_dict(), g1_path)
+            torch.save(G2.state_dict(), g2_path)
+            torch.save(D1.state_dict(), d1_path)
+            torch.save(D2.state_dict(), d2_path)
+
+        if wandb == True:
+            wandb.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
+
+
+def load_model(model_path, iteration):
+    g1_path = os.path.join(model_path, 'g1-%d.pkl' %(iteration))
+    g2_path = os.path.join(model_path, 'g2-%d.pkl' %(iteration))
+    d1_path = os.path.join(model_path, 'd1-%d.pkl' %(iteration))
+    d2_path = os.path.join(model_path, 'd2-%d.pkl' %(iteration))
+    model = CycleGAN()
+    mode.G1 = torch.load(g1_path)
+    mode.G2 = torch.load(g2_path)
+    mode.D1 = torch.load(d1_path)
+    mode.D2 = torch.load(d2_path)
+    return model
