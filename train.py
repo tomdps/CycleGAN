@@ -82,14 +82,15 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
             wandb.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
 
 
-def load_model(model_path, iteration):
-    g1_path = os.path.join(model_path, 'g1-%d.pkl' %(iteration))
-    g2_path = os.path.join(model_path, 'g2-%d.pkl' %(iteration))
-    d1_path = os.path.join(model_path, 'd1-%d.pkl' %(iteration))
-    d2_path = os.path.join(model_path, 'd2-%d.pkl' %(iteration))
+def load_model(model_path, version):
+    g1_path = os.path.join(model_path, 'g1-%s.pkl' %(version))
+    g2_path = os.path.join(model_path, 'g2-%s.pkl' %(version))
+    d1_path = os.path.join(model_path, 'd1-%s.pkl' %(version))
+    d2_path = os.path.join(model_path, 'd2-%s.pkl' %(version))
     model = CycleGAN()
-    mode.G1 = torch.load(g1_path)
-    mode.G2 = torch.load(g2_path)
-    mode.D1 = torch.load(d1_path)
-    mode.D2 = torch.load(d2_path)
+    init_model(model)
+    model.G1.load_state_dict(torch.load(g1_path))
+    model.G2.load_state_dict(torch.load(g2_path))
+    model.D1.load_state_dict(torch.load(d1_path))
+    model.D2.load_state_dict(torch.load(d2_path))
     return model
