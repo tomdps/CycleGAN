@@ -7,6 +7,8 @@ import wandb
 
 
 def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_iter = 7000, lambd=10, loss_gan = error(2), loss_cycle = error(1), print_every = 100, save_every=2000, sample_every=500, log=False):
+
+    run = wandb.init(project="cyclegan")
     G1 = cycle_gan.G1
     G2 = cycle_gan.G2
     D1 = cycle_gan.D1
@@ -85,7 +87,7 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
             torch.save(D2.state_dict(), d2_path)
 
         if log == True:
-            wandb.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
+            run.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
         
         epoch +=1
 
