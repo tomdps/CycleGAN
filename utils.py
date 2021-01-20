@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam, SGD
+import random
+import itertools
 
 from networks import *
 from data_loader import *
@@ -44,9 +46,34 @@ def init_model(cycle_gan, optimizer = None, lr=0.0002, betas=(0.5, 0.999), eps=1
                                       
 
 def init_optimizer(cycle_gan, lr, betas, eps, weight_decay, amsgrad):
-    g_params = list(cycle_gan.G1.parameters()) + list(cycle_gan.G2.parameters())
-    d_params = list(cycle_gan.D1.parameters()) + list(cycle_gan.D2.parameters())
+    g_params = itertools.chain(cycle_gan.G1.parameters(), cycle_gan.G2.parameters())
+    d_params = itertools.chain(cycle_gan.D1.parameters(), cycle_gan.D2.parameters())
 
     g_optimizer = Adam(g_params, lr, betas, eps, weight_decay, amsgrad)
     d_optimizer = Adam(d_params, lr, betas, eps, weight_decay, amsgrad)
     return g_optimizer, d_optimizer
+
+class Buffer():
+    def __init__(self, size):
+        self.size = size
+        self.images = []
+        self.n_images = 0
+
+    def sample(self, images):
+        sample = []
+        for image in images:
+            if self.num_images < self.images:
+                self.images.append(image)
+                self.n_images += 1
+                sample.append(image)
+            else:
+                p = random.uniform(0, 1)
+                if p > 0.5:
+                    pick_image = random.randint(0, self.size - 1)
+                    sampled_image = self.images[pick_image].clone()
+                    self.images[pick_image] = image
+                    sample.append(sampled_image)
+                else:
+                    sample.append(image)
+        sample = torch.cat(sample, 0)
+        return sample

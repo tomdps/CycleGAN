@@ -14,6 +14,9 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
     dl1_iter = iter(dataloader1)
     dl2_iter = iter(dataloader2)
     iter_per_epoch = min(len(dl1_iter), len(dl2_iter))
+    epoch = 1
+    buffer_1 = Buffer(50)
+    buffer_2 = Buffer(50)
         
     for iteration in range(max_iter):
         
@@ -24,7 +27,7 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
         data_1 = dl1_iter.next().cuda()
         data_2 = dl1_iter.next().cuda()
 
-        #inference
+        #inference 
         G1_gen = G1(data_1)
         G2oG1_gen = G2(G1_gen)
         G2_gen = G2(data_2)
@@ -51,28 +54,31 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
 
         cycle_gan.d_opt.zero_grad()
 
+
+        gen_1 = buffer_1.sample(G1_gen)
         d1_loss_real = loss_gan(D1(data_2)-1)
-        d1_loss_fake = loss_gan(D1(G1(data_1).detach()))
-        d1_loss = (d1_loss_real + d1_loss_fake)*0.5
+        d1_loss_fake = loss_gan(D1(gen_1.detach()))
+        d1_loss = 0.5*(d1_loss_real + d1_loss_fake)
         d1_loss.backward()
         
+        gen_2 = buffer_2.sample(G2_gen)
         d2_loss_real = loss_gan(D2(data_1)-1)
-        d2_loss_fake = loss_gan(D2(G2(data_2).detach()))
-        d2_loss = (d2_loss_real + d2_loss_fake)*0.5
+        d2_loss_fake = loss_gan(D2(gen_2.detach()))
+        d2_loss = 0.5*(d2_loss_real + d2_loss_fake)
         d2_loss.backward()
         
         cycle_gan.d_opt.step()
         
-        if (iteration+1) % print_every == 0:
-            print('Iter [%d/%d], G_loss: %.4f, d1_loss: %.4f, d2_loss: %.4f '
-                    %(iteration+1, max_iter, G_loss.item(), d1_loss.item(), 
+        if (iteration+1) % iter_per_epoch == 0:
+            print('Epoch [%d/%d], G_loss: %.4f, d1_loss: %.4f, d2_loss: %.4f '
+                    %(epoch, max_iter, G_loss.item(), d1_loss.item(), 
                     d2_loss.item()))
         
-        if (iteration+1) % save_every == 0:
-            g1_path = os.path.join(model_path, 'g1-%s-%d.pkl' %(run,iteration+1))
-            g2_path = os.path.join(model_path, 'g2-%s-%d.pkl' %(run,iteration+1))
-            d1_path = os.path.join(model_path, 'd1-%s-%d.pkl' %(run,iteration+1))
-            d2_path = os.path.join(model_path, 'd2-%s-%d.pkl' %(run,iteration+1))
+        if (iteration+1) % iter_per_epoch*5 == 0:
+            g1_path = os.path.join(model_path, 'g1-%s-%d.pkl' %(run,epoch))
+            g2_path = os.path.join(model_path, 'g2-%s-%d.pkl' %(run,epoch))
+            d1_path = os.path.join(model_path, 'd1-%s-%d.pkl' %(run,epoch))
+            d2_path = os.path.join(model_path, 'd2-%s-%d.pkl' %(run,epoch))
             torch.save(G1.state_dict(), g1_path)
             torch.save(G2.state_dict(), g2_path)
             torch.save(D1.state_dict(), d1_path)
@@ -80,6 +86,8 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
 
         if log == True:
             wandb.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
+        
+        epoch +=1
 
 
 def load_model(model_path, version):
