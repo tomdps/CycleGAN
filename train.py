@@ -3,12 +3,11 @@ import torch.nn as nn
 from networks import *
 from data_loader import *
 from utils import *
-import wandb
-
+# import wandb
+import pickle
 
 def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_iter = 7000, lambd=10, loss_gan = error(2), loss_cycle = error(1), print_every = 100, save_every=2000, sample_every=500, log=False):
 
-    run = wandb.init(project="cyclegan")
     G1 = cycle_gan.G1
     G2 = cycle_gan.G2
     D1 = cycle_gan.D1
@@ -19,6 +18,9 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
     epoch = 1
     buffer_1 = Buffer(50)
     buffer_2 = Buffer(50)
+    loss_g = []
+    loss_d1 = []
+    loss_d2 = []
         
     for iteration in range(max_iter):
         
@@ -90,6 +92,14 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', max_ite
             run.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
         
         epoch +=1
+        loss_g.append(G_loss.item())
+        loss_d1.append(d1_loss.item())
+        loss_d2.append(d2_loss.item())
+
+    loss = [loss_g, loss_d1, loss_d2]
+    loss_filename = os.path.join(model_path, 'loss_%s'%(run))
+    with open(loss_filename, 'wb') as handle:
+        pickle.dump(loss, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_model(model_path, version):
