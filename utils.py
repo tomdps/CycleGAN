@@ -19,7 +19,12 @@ def init_model(cycle_gan, optimizer = None, lr=0.0002, betas=(0.5, 0.999), eps=1
     def init_weights(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
-            nn.init.normal(m.weight.data, 0.0, init_std)
+            if init == 'normal':
+                nn.init.normal_(m.weight.data, 0.0, init_std)
+            elif init == 'xavier':
+                init.xavier_normal_(m.weight.data, init_std)
+            elif init == 'kaiming':
+                init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
         elif classname.find('BatchNorm2d') != -1: 
             nn.init.normal_(m.weight.data, 1.0, init_std)
             nn.init.constant_(m.bias.data, 0.0)
@@ -77,3 +82,11 @@ class Buffer():
                     sample.append(image)
         sample = torch.cat(sample, 0)
         return sample
+
+def normalization_layer(layer_type):
+    if layer_type == 'batch':
+        return functools.partial(nn.BatchNorm2d, affine = True, track_running_stats = True)
+    elif layer_type == 'instance':
+        return functools.partial(nn.InstanceNorm2d, affine = False, track_running_stats = False)
+    else:
+        print('%s : Norm layer not implemented'%(layer_type))
