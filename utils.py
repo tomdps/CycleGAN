@@ -62,7 +62,7 @@ class Buffer():
     def sample(self, images):
         sample = []
         for image in images:
-            if self.num_images < self.images:
+            if self.n_images < self.size:
                 self.images.append(image)
                 self.n_images += 1
                 sample.append(image)
