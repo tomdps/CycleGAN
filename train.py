@@ -81,8 +81,8 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
             d2_loss_acc += d2_loss
         
         print('Epoch [%d/%d], G_loss: %.4f, d1_loss: %.4f, d2_loss: %.4f '
-                %(epoch, n_epochs, G_loss.item(), d1_loss.item(), 
-                d2_loss.item()))
+                %(epoch, n_epochs, G_loss_acc.item()/iter_per_epoch, d1_loss_acc.item()/iter_per_epoch, 
+                d2_loss_acc.item()/iter_per_epoch))
         
         if epoch % 5 == 0:
             g1_path = os.path.join(model_path, 'g1-%s-%d.pkl' %(run,epoch))
@@ -94,13 +94,12 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
             torch.save(D1.state_dict(), d1_path)
             torch.save(D2.state_dict(), d2_path)
 
-        mean_epoch_loss_g = torch.mean(epoch_G_loss)
         if log == True:
             run.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
             
-        loss_g.append(G_loss.item())
-        loss_d1.append(d1_loss.item())
-        loss_d2.append(d2_loss.item())
+        loss_g.append(G_loss_acc.item()/iter_per_epoch)
+        loss_d1.append(G_loss_acc.item()/iter_per_epoch)
+        loss_d2.append(G_loss_acc.item()/iter_per_epoch)
 
         dl1_iter = iter(dataloader1)
         dl2_iter = iter(dataloader2)
