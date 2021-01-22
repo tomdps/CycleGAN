@@ -34,7 +34,7 @@ class ResidualBlock(nn.Module):
         self.resblock = nn.Sequential(*resblock)
     
     def forward(self, x):
-        out = F.ReLU(x + self.resblock(x))
+        out = F.relu(x + self.resblock(x))
         return out
 
 class Generator(nn.Module):
