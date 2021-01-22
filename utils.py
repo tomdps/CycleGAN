@@ -14,16 +14,16 @@ def error(n):
     return loss_n
 
 def init_model(cycle_gan, init = 'normal', optimizer = None, lr=0.0002, betas=(0.5, 0.999), eps=1e-08, weight_decay=0, amsgrad=False, init_std=0.02):
-    # weights initialization
-    #N(0,0.01)
-    def init_weights(m, init):
+
+    init_type = init
+    def init_weights(m):
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
-            if init == 'normal':
+            if init_type == 'normal':
                 nn.init.normal_(m.weight.data, 0.0, init_std)
-            elif init == 'xavier':
+            elif init_type == 'xavier':
                 init.xavier_normal_(m.weight.data, init_std)
-            elif init == 'kaiming':
+            elif init_type == 'kaiming':
                 init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
         elif classname.find('BatchNorm2d') != -1: 
             nn.init.normal_(m.weight.data, 1.0, init_std)
