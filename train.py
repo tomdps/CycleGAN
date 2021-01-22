@@ -3,7 +3,7 @@ import torch.nn as nn
 from networks import *
 from data_loader import *
 from utils import *
-# import wandb
+import wandb
 import pickle
 
 def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epochs = 100, lambd=10, loss_gan = error(2), loss_cycle = error(1), print_every = 100, save_every=2000, sample_every=500, log=False):
@@ -64,13 +64,13 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
 
             gen_1 = buffer_1.sample(G1_gen)
             d1_loss_real = loss_gan(D1(data_2)-1)
-            d1_loss_fake = loss_gan(D1(gen_1.detach()))
+            d1_loss_fake = loss_gan(D1(gen_1[None, ...].detach()))
             d1_loss = 0.5*(d1_loss_real + d1_loss_fake)
             d1_loss.backward()
             
             gen_2 = buffer_2.sample(G2_gen)
             d2_loss_real = loss_gan(D2(data_1)-1)
-            d2_loss_fake = loss_gan(D2(gen_2.detach()))
+            d2_loss_fake = loss_gan(D2(gen_2[None, ...].detach()))
             d2_loss = 0.5*(d2_loss_real + d2_loss_fake)
             d2_loss.backward()
             
@@ -79,6 +79,9 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
             G_loss_acc += G_loss
             d1_loss_acc += d1_loss
             d2_loss_acc += d2_loss
+
+            if log == True:
+                wandb.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
         
         print('Epoch [%d/%d], G_loss: %.4f, d1_loss: %.4f, d2_loss: %.4f '
                 %(epoch, n_epochs, G_loss_acc.item()/iter_per_epoch, d1_loss_acc.item()/iter_per_epoch, 
@@ -93,9 +96,6 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
             torch.save(G2.state_dict(), g2_path)
             torch.save(D1.state_dict(), d1_path)
             torch.save(D2.state_dict(), d2_path)
-
-        if log == True:
-            run.log({"Generator loss": G_loss , "D1 loss": d1_loss, "d2_loss": d2_loss})
             
         loss_g.append(G_loss_acc.item()/iter_per_epoch)
         loss_d1.append(G_loss_acc.item()/iter_per_epoch)
