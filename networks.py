@@ -57,7 +57,7 @@ class Generator(nn.Module):
                     ]
 
         for i in range(n_blocks):
-            model += [ResidualBlock(conv_features * 4, bias=bias)]
+            model += [ResidualBlock(conv_features * 4, norm_layer)]
 
         model += [
             nn.ConvTranspose2d(conv_features * 4, conv_features * 2, kernel_size=3, stride=2,
