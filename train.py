@@ -110,13 +110,13 @@ def train(cycle_gan, dataloader1, dataloader2, model_path, run='latest', n_epoch
         pickle.dump(loss, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def load_model(model_path, version):
+def load_model(model, model_path, version):
     g1_path = os.path.join(model_path, 'g1-%s.pkl' %(version))
     g2_path = os.path.join(model_path, 'g2-%s.pkl' %(version))
     d1_path = os.path.join(model_path, 'd1-%s.pkl' %(version))
     d2_path = os.path.join(model_path, 'd2-%s.pkl' %(version))
-    model = CycleGAN()
-    init_model(model)
+    # model = CycleGAN()
+    # init_model(model)
     model.G1.load_state_dict(torch.load(g1_path))
     model.G2.load_state_dict(torch.load(g2_path))
     model.D1.load_state_dict(torch.load(d1_path))
