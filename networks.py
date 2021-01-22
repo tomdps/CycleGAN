@@ -110,6 +110,6 @@ class Discriminator(nn.Module):
         return self.model(x)
 
 
-if __name__ == "__main__":
-    model = CycleGAN()
-    model.train()
+# if __name__ == "__main__":
+#     model = CycleGAN(norm_type='batch')
+#     print(model.train())
