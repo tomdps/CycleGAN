@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
@@ -33,7 +34,7 @@ class ResidualBlock(nn.Module):
         self.resblock = nn.Sequential(*resblock)
     
     def forward(self, x):
-        out = x + self.resblock(x)
+        out = F.ReLU(x + self.resblock(x))
         return out
 
 class Generator(nn.Module):
