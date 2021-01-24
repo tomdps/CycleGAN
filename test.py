@@ -52,17 +52,17 @@ def test(cycle_gan, dataloader, file_to_save = None, dir_num = 1, plot_number = 
     plt.show()
     
     
-if __name__=='main':  
-    photo_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/photo_jpg'
+#if __name__=='main':  
+photo_path = ''
+
+data = CycleGanDataset(photo_path, normalize=(True))
     
-    data = CycleGanDataset(photo_path, normalize=(True))
-        
-    dataloader = CycleGanDataloader(data)
-    
-    
-    cycle_gan = CycleGAN()
-    
-    test(cycle_gan, dataloader, plot_number=3, maxiter = 5)
+dataloader = CycleGanDataloader(data)
+
+
+cycle_gan = CycleGAN()
+
+test(cycle_gan, dataloader, plot_number=3, maxiter = 5)
 
 
 

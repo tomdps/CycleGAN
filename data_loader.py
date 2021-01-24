@@ -53,7 +53,7 @@ class CycleGanDataset(Dataset):
 
 class CycleGanDataloader(DataLoader):
     def __init__(self, cycleGANdataset, batch_size=1, pin_memory=True):
-        super().__init__(cycleGANdataset, batch_size=1, pin_memory=True)
+        super().__init__(cycleGANdataset, batch_size=batch_size, pin_memory=True)
     
     def unnormalize(self, image, mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]):
         for t, m, s in zip(image, mean, std):
@@ -71,8 +71,8 @@ class CycleGanDataloader(DataLoader):
 ## Test
 
 if __name__=='main':
-    monet_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/monet_jpg'
-    photo_path = '/Users/alex/Desktop/MVA et Centrale 3A/Deep Learning/Projet/Code/CycleGAN/data/gan-getting-started/photo_jpg'
+    monet_path = ''
+    photo_path = ''
     data1 = CycleGanDataset(monet_path, normalize=(True))
     data2 = CycleGanDataset(photo_path, normalize=(True))
     
