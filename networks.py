@@ -34,11 +34,11 @@ class ResidualBlock(nn.Module):
         self.resblock = nn.Sequential(*resblock)
     
     def forward(self, x):
-        out = F.relu(x + self.resblock(x))
+        out = x + self.resblock(x)
         return out
 
 class Generator(nn.Module):
-    def __init__(self, input_channel, output_channel, norm_layer, conv_features=64, n_blocks=9):
+    def __init__(self, input_channel, output_channel, norm_layer=nn.BatchNorm2d, conv_features=64, n_blocks=9):
         super(Generator, self).__init__()
         bias = norm_layer.func == nn.InstanceNorm2d
         model = [
